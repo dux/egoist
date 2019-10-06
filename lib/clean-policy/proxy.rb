@@ -1,7 +1,7 @@
-# @object / nil
+# true / false
 # @model.can.write?
 #
-# raise error or return @model
+# raise error or return true
 # @model.can.write!
 #
 # redirect on error or return true
@@ -19,16 +19,16 @@ class Policy
 
       if action == '!'
         @policy.can?(name, &block)
-        @policy.model
+        true
       elsif action == '?'
         raise "Block given, not allowed in boolean (?) policy, use bang .#{name}! { .. }" if block_given?
 
         begin
           @policy.can?(name)
-          @policy.model || true
+          true
         rescue Policy::Error
           yield if block_given?
-          nil
+          false
         end
       else
         raise ArgumentError.new('Bad policy method name')
