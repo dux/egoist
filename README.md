@@ -23,17 +23,18 @@ and NOT in Policy object, because Policy object is a wrong place to store that m
 Use something like this
 
 ```ruby
+  # inside model
   class Blog
     def self.editable user
-      if policy(user: user, model: self, action: admin?
-
-        scopes
+      if policy(user: user).admin?
+        # no limit if it can admin
+        self
       else
-        where
+        # else return only records created by user
+        where(created_by: user.id)
       end
     end
   end
-
 ```
 
 ### Dependency

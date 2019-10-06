@@ -39,7 +39,7 @@ class Policy
     raise Error.new('Access disabled in policy')
    rescue Policy::Error => e
     error = e.message
-    error += " - #{self.class}.#{@action}" if Lux.config(:dump_errors)
+    error += " - #{self.class}.#{@action}" if defined?(Lux) && Lux.config(:dump_errors)
 
     if block
       block.call(error)

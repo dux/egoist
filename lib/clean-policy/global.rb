@@ -32,7 +32,7 @@ class Object
     end
 
     opts[:user] ||= user_current if respond_to?(:user_current)
-    opts[:user] ||= User.current if const_defined?(User) && User.respond_to?(:current)
+    opts[:user] ||= User.current if defined?(User) && User.respond_to?(:current)
 
     Policy opts
   end
