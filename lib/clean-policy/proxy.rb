@@ -25,7 +25,7 @@ class Policy
 
         begin
           @policy.can?(name)
-          @policy.model
+          @policy.model || true
         rescue Policy::Error
           yield if block_given?
           nil
