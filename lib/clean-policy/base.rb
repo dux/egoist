@@ -16,7 +16,7 @@ class Policy
 
   # pass block if you want to handle errors yourself
   # return true if false if block is passed
-  def can? action, &block
+  def can? action, *args, &block
     @action = action
       .to_s
       .gsub(/[^\w+]/, '')
@@ -27,17 +27,17 @@ class Policy
     raise RuntimeError, 'Method name not allowed' if %i(can).index(@action)
     raise NoMethodError, %[Policy check "#{@action}" not found in #{self.class}] unless respond_to?(@action)
 
-    call &block
+    call *args, &block
   end
 
   # call has to be isolated because specific of error handling
-  def call &block
+  def call *args, &block
     raise Error.new 'User is not defined' unless @user
 
     return true if before(@action)
-    return true if send(@action)
+    return true if send(@action, *args)
     raise Error.new('Access disabled in policy')
-   rescue Policy::Error => e
+  rescue Policy::Error => e
     error = e.message
     error += " - #{self.class}.#{@action}" if defined?(Lux) && Lux.config(:dump_errors)
 
@@ -45,11 +45,11 @@ class Policy
       block.call(error)
       false
     else
-      raise Policy::Error.new(error)
+      raise Policy::Error, error
     end
   end
 
-  def proxy
+  def can
     Proxy.new self
   end
 
