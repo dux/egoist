@@ -62,7 +62,7 @@ class BlogPolicy < Policy
 end
 ```
 
-## Helper
+## Model helper - cleaner code
 
 if you modify `ApplicationModel` and create method `can`, that also auto load current user you can have a nifty code.
 
@@ -90,7 +90,9 @@ then this will work everywhere
 
 ## Before filter
 
-It is possible to define before filter for any action. If before filter returns true, action will not be performed.
+It is possible to define before filter for any action. If before filter returns true, action method will not be called.
+
+#### Before filter example
 
 ```ruby
 class ModelPolicy
@@ -135,6 +137,30 @@ Use something like this
 
   Blog.editable_by(current_user).where(...)
 ```
+
+### Usage in controllers
+
+There is no controller policy method matching because
+
+* that is not needed
+* is confusing and produces unnecessary code
+
+Unnecessary doube code == code code smell, and code that smells is not clean.
+
+What you should do is try to use basic CRUD actions (create, read, update, delete) as much as possible.
+
+For example let say that you have a `@contract` that is not for everybodys eyes and you have api action
+to fetch some data + view controller actions to show that data.
+
+You will not create `show?`, `show_documents?`, `quote?` methods in `QuotePolicy` and `ApiPolicy`, but you will ony create one, `read?` method in `ContractPolicy` and that is all.
+
+Then you write something like
+
+* `@contract.can.read!` - `Policy::Error` will be raised unless a user can read a docuent
+* `return redirect_to '/' unless @contract.can.read?`
+* or written like this even `@contract.can.read! { return redirect_to '/' }`
+
+We allways check for read permission, when we need to check for read permision. No need to double define controller methods in `Policy` object.
 
 ### Dependency
 
