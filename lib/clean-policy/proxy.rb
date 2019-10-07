@@ -4,25 +4,23 @@ class Policy
       @policy = policy
     end
 
-    def method_missing name, &block
+    def method_missing name, *args, &block
       name   = name.to_s.sub(/(.)$/, '')
       action = $1
+      @policy.can?(name, *args)
+      @policy.model || true
+    rescue Policy::Error => error
+      if block_given?
+        yield
+        return nil
+      end
 
       if action == '!'
-        @policy.can?(name, &block)
-        true
+        raise error
       elsif action == '?'
-        raise "Block given, not allowed in boolean (?) policy, use bang .#{name}! { .. }" if block_given?
-
-        begin
-          @policy.can?(name)
-          true
-        rescue Policy::Error
-          yield if block_given?
-          false
-        end
+        nil
       else
-        raise ArgumentError.new('Bad policy method name')
+        raise ArgumentError.new('Bad policy method %s' % name)
       end
     end
   end

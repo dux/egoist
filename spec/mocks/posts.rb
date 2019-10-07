@@ -7,6 +7,6 @@ mock :post do |user, opts|
 
   def user.can user=nil
     user ||= User.current
-    policy(user: user, model: self).can
+    Policy(user: user, model: self)
   end
 end

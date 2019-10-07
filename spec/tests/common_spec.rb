@@ -12,22 +12,34 @@ describe Policy do
   context 'without model' do
     it 'cant access admin pages' do
       # checks on ApplicationPolicy
-      expect { Policy(user: user).can?(:admin?) }.to raise_error Policy::Error
+      expect { Policy(user: user).admin! }.to raise_error Policy::Error
     end
 
     it 'can access admin pages' do
       # checks on ApplicationPolicy
-      expect(Policy(user: admin_user).can?(:admin?)).to be_truthy
+      expect(Policy(user: admin_user).admin?).to be_truthy
     end
 
     it 'raises error on action not found' do
       # checks on ApplicationPolicy
-      expect { Policy(user: user).can?(:not_defined?) } .to raise_error NoMethodError
+      expect { Policy(user: user).not_defined? } .to raise_error NoMethodError
     end
 
     it 'processes before filter' do
-      expect(Policy(user: user).can?(:before_1)).to be_truthy
-      expect{ Policy(user: user).can?(:before_2) }.to raise_error Policy::Error
+      expect(Policy(user: user).before_1?).to be_truthy
+      expect{ Policy(user: user).before_2! }.to raise_error Policy::Error
+    end
+
+    it 'accepts error block in bang method' do
+      test = false
+      Policy(user: user).admin! { test = true }
+      expect(test).to be_truthy
+    end
+
+    it 'accepts error block in question method' do
+      test = false
+      Policy(user: user).admin? { test = true }
+      expect(test).to be_truthy
     end
   end
 
@@ -42,26 +54,26 @@ describe Policy do
     it 'can write owned object' do
       # checks on PostPolicy as regular user
       post = mock.create :post, created_by: user.id
-      expect(Policy(post, user: user).can?(:write?)).to be_truthy
+      expect(Policy(post, user: user).write?).to be_truthy
 
       # checks on PostPolicy as admin
       post = mock.create :post, created_by: user.id + 9
-      expect(Policy(post, user: admin_user).can?(:write?)).to be_truthy
+      expect(Policy(post, user: admin_user).write?).to be_truthy
     end
 
     it 'accepts a function parameter' do
-      expect(Policy(post, user: user).can?(:create?, {ip: '1.2.3.4'})).to be_truthy
-      expect { Policy(post, user: user).can?(:create?, {ip: '2.3.4.5'}) }.to raise_error Policy::Error
+      expect( Policy(post, user: user).create?({ip: '1.2.3.4'}) ).to be_truthy
+      expect { Policy(post, user: user).create!({ip: '2.3.4.5'}) }.to raise_error Policy::Error
     end
 
     it 'is accessible via can and accepts attributes' do
-      expect(Policy(post, user: user).can?(:create, {ip: '1.2.3.4'})).to be_truthy
+      expect(Policy(post, user: user).create?({ip: '1.2.3.4'})).to be_truthy
     end
   end
 
   context 'accessed via proxy' do
     it 'raise custom error' do
-      expect { Policy(user: user).can.custom_error! }.to raise_error Policy::Error
+      expect { Policy(user: user).custom_error! }.to raise_error Policy::Error
     end
 
     it 'can write as admin' do

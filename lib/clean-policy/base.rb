@@ -3,7 +3,7 @@ class Policy
 
   def initialize model:, user:
     @model = model
-    @user  = user
+    @user  = user || current_user
   end
 
   # pass block if you want to handle errors yourself
@@ -22,30 +22,31 @@ class Policy
     call *args, &block
   end
 
-  # call has to be isolated because specific of error handling
-  def call *args, &block
-    raise Error.new 'User is not defined' unless @user
-
-    return true if before(@action)
-    return true if send(@action, *args)
-    raise Error.new('Access disabled in policy')
-  rescue Policy::Error => e
-    error = e.message
-    error += " - #{self.class}.#{@action}" if defined?(Lux) && Lux.config(:dump_errors)
-
-    if block
-      block.call(error)
-      false
-    else
-      raise Policy::Error, error
-    end
-  end
-
   def can
     Proxy.new self
   end
 
-  ###
+  private
+
+  # call has to be isolated because specific of error handling
+  def call *args, &block
+    raise Error, 'User is not defined, no access' unless @user
+
+    return true if before(@action)
+    return true if send(@action, *args)
+
+    raise Error, 'Access disabled in policy'
+  rescue Policy::Error => error
+    message = error.message
+    message += " - #{self.class}.#{@action}" if defined?(Lux) && Lux.config(:dump_errors)
+
+    if block
+      block.call(message)
+      false
+    else
+      raise Policy::Error, message
+    end
+  end
 
   def before action
     false
@@ -55,4 +56,12 @@ class Policy
     raise Policy::Error.new(message)
   end
 
+  # get current user from globals if globals defined
+  def current_user
+    if defined?(User) && User.respond_to?(:current)
+      User.current
+    elsif defined?(Current) && Current.respond_to?(:user)
+      Current.user
+    end
+  end
 end
