@@ -1,6 +1,6 @@
 # Ruby access policy library
 
-## Installation and usage
+## Installation
 
 to install
 
@@ -18,34 +18,51 @@ and to use
 
 Basic usage is to load policy object and execute test
 
-`Policy(user: current_user, model: @blog).can.read?`
+`@policy = Policy(user: current_user, model: @blog)`
 
-this will return `true` or `false`.
+* `@policy.read?`
 
-If you bang! method instead of question mark, Policy will raise error instead of returning false.
+  this will return `true` value (`@model` or `true`) or `nil`.
 
-`Policy(user: current_user, model: @blog).can.read!`
+*  `@policy.read!`
 
-### How to create and name a policy class
+   If you bang! method instead of question mark, Policy will raise error instead of returning `nil`.
+
+* `@policy.read? { redirect_to '/' }`
+
+  If you provide a `&block`, `&block` will be executed first and then `nil` will be retuned.
+
+
+That is all you need to know for calling policies.
+
+## How to create and name a policy class
 
 Rules
 
+* Policy methods end with question mark, raise errors and return `true` or `false`
+  * if you need to raise policy named error, use `error` method
 * Policy class have to inherit from `Policy`
 * Policy class is calculated based on a given model
   * if no model given, `ApplicationPolicy` will be used
   * with @post (class Post) model given, `PostPolicy` class will be used
   * with @foo_bar (class Foo::Bar) model given, `Foo::BarPolicy` class will be used
 
-Example
+#### Full example
 
 ```ruby
 class BlogPolicy < Policy
+  COUNT = 100
+
   def before(action_name)
     return @user.is_admin ? true : false
   end
 
   def create?(ip)
-    Blog.where(ip: ip).count < 100
+    if Blog.where(ip: ip).count < COUNT
+      true
+    else
+      error "Only #{COUNT} blogs can be created per uniqe IP"
+    end
   end
 
   def read?
@@ -69,8 +86,8 @@ if you modify `ApplicationModel` and create method `can`, that also auto load cu
 
 ```ruby
 class ApplicationModel
-  def can
-    Policy(user: User.current, model: self) ? self : nil
+  def can user = nil
+    Policy(user: user || User.current, model: self)
   end
 end
 
@@ -84,7 +101,7 @@ then this will work everywhere
   @post = Post.first
   @post.can.read? # true or false
   @post.can.read! # true or raise Policy::Error
-  @post.can.read! do |error|
+  @post.can.read! do |error_message|
     # true or execute block if false
   end
 ```
@@ -98,8 +115,11 @@ It is possible to define before filter for any action. If before filter returns 
 ```ruby
 class ModelPolicy
   def before action
+    # Policy.is_authorized? will not return true unless you call super
+    super
+
     # admin can do anything
-    return true if @user.is_admin
+    @user.is_admin
   end
 end
 
@@ -109,8 +129,26 @@ class PostPolicy < ModelPolicy
   end
 end
 
-Policy(user: admin_user).can.read? # before filter returns true, error is never called
-Policy(user: user).can.read?       # not allowed, raises error
+Policy(user: admin_user).read? # before filter returns true, error is never called
+Policy(user: user).read?       # not allowed, raises error
+```
+
+## Defining global current user
+
+Maybe you have global current user for a request, so you do not have to pass it arround all the time.
+
+Clear policy will try to load current by calling `Policy#current_user`. Feel free to overload the method to meet your needs.
+
+```ruby
+class Policy
+  def current_user
+    if defined?(User) && User.respond_to?(:current)
+      User.current
+    elsif defined?(Current) && Current.respond_to?(:user)
+      Current.user
+    end
+  end
+end
 ```
 
 ## Model scopes
@@ -141,7 +179,7 @@ Use something like this
 
 ## Usage in controllers
 
-There is no controller policy method matching because
+There is no controller method name to policy method name matching, because
 
 * that is not needed
 * is confusing and produces unnecessary code
@@ -156,6 +194,17 @@ to fetch some data + view controller actions to show that data.
 You will not create `show?`, `show_documents?`, `quote?` methods in `QuotePolicy` and `ApiPolicy`, but you will ony create one, `read?` method in `ContractPolicy` and that is all.
 
 Then you write something like
+
+```ruby
+class PostsController
+  def show
+    @post = Post.find_by id: params[:id]
+    @post.can.read? { redirect_to '/' }
+
+    # or as one liner, because success returns @model
+    @post = Post.find_by(id: params[:id]).can.read? { redirect_to '/' }
+  end
+```
 
 * `@contract.can.read!` - `Policy::Error` will be raised unless a user can read a docuent
 * `return redirect_to '/' unless @contract.can.read?`
