@@ -33,7 +33,8 @@ Rules
 * Policy class have to inherit from `Policy`
 * Policy class is calculated based on a given model
   * if no model given, `ApplicationPolicy` will be used
-  * @post (class Post) model givenm `PostPolicy` will be used
+  * with @post (class Post) model given, `PostPolicy` class will be used
+  * with @foo_bar (class Foo::Bar) model given, `Foo::BarPolicy` class will be used
 
 Example
 
@@ -112,7 +113,7 @@ Policy(user: admin_user).can.read? # before filter returns true, error is never 
 Policy(user: user).can.read?       # not allowed, raises error
 ```
 
-## Scopes
+## Model scopes
 
 Often, you will want to have some kind of view listing records which a particular user has access to. (line taken from Pundit gem)
 
@@ -138,7 +139,7 @@ Use something like this
   Blog.editable_by(current_user).where(...)
 ```
 
-### Usage in controllers
+## Usage in controllers
 
 There is no controller policy method matching because
 

@@ -1,12 +1,3 @@
-# true / false
-# @model.can.write?
-#
-# raise error or return true
-# @model.can.write!
-#
-# redirect on error or return true
-# @model.can.write! { redirect_to '/login' }
-
 class Policy
   class Proxy
     def initialize policy
