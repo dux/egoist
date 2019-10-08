@@ -66,42 +66,53 @@ class BlogPolicy < Policy
   end
 
   def read?
-    return true if @model.created_by == @user.id
-    @model.is_published
+    return true if model.created_by == user.id
+    model.is_published
   end
 
   def update?
-    @model.created_by == @user.id
+    model.created_by == user.id
   end
 
   def delete?
-    @model.is_published
+    model.is_published
   end
 end
 ```
 
-## Model helper - cleaner code
+## Model helper - cleaner code, full example
 
 if you modify `ApplicationModel` and create method `can`, that also auto load current user you can have a nifty code.
 
 ```ruby
+# ActiveRecord or Sequel class
+class Blog < ApplicationModel
+end
+
+# small proxy method to create policy scope from model
 class ApplicationModel
-  def can user = nil
+  def can(user = nil)
     Policy(user: user || User.current, model: self)
   end
 end
 
-class Post < ApplicationModel
+# Blog policy object
+class BlogPolicy
+  def read?
+    return true if model.is_published           # all can read if published
+    return true if model.created_by == user.id  # unless published, only creator can see
+    false
+  end
 end
 ```
 
 then this will work everywhere
 
 ```ruby
-  @post = Post.first
-  @post.can.read? # true or false
-  @post.can.read! # true or raise Policy::Error
-  @post.can.read! do |error_message|
+  @blog = Blog.first
+  @blog.can.read? # true or false
+  @blog.can.read! # true or raise Policy::Error
+  @blog.can.read! do |error_message|
     # true or execute block if false
   end
 ```
@@ -115,9 +126,6 @@ It is possible to define before filter for any action. If before filter returns 
 ```ruby
 class ModelPolicy
   def before action
-    # Policy.is_authorized? will not return true unless you call super
-    super
-
     # admin can do anything
     @user.is_admin
   end
