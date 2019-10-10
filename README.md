@@ -137,8 +137,8 @@ class PostPolicy < ModelPolicy
   end
 end
 
-Policy(user: admin_user).read? # before filter returns true, error is never called
-Policy(user: user).read?       # not allowed, raises error
+Policy(@post, user: admin_user).read? # before filter returns true, error is never called
+Policy(@post, user: user).read?       # not allowed, raises error
 ```
 
 ## Defining global current user
@@ -149,6 +149,7 @@ Clear policy will try to load current by calling `Policy#current_user`. Feel fre
 
 ```ruby
 class Policy
+  # default current_user policy method
   def current_user
     if defined?(User) && User.respond_to?(:current)
       User.current
@@ -210,15 +211,58 @@ class PostsController
     @post.can.read? { redirect_to '/' }
 
     # or as one liner, because success returns @model
-    @post = Post.find_by(id: params[:id]).can.read? { redirect_to '/' }
-  end
+    @post = Post.find_by(id: params[:id]).can.read? do
+      redirect_to '/'
+    end
 ```
 
 * `@contract.can.read!` - `Policy::Error` will be raised unless a user can read a docuent
 * `return redirect_to '/' unless @contract.can.read?`
 * or written like this even `@contract.can.read! { return redirect_to '/' }`
 
-We allways check for read permission, when we need to check for read permision. No need to double define controller methods in `Policy` object.
+
+### Using controller authorize method
+
+```ruby
+class PostsController
+  def show
+    @post = Post.find_by id: params[:id]
+
+    authorize @post, :read?
+    authorize :dashboard, :access?
+  end
+
+  after_action do
+    error.unauthorized unless is_authorized?
+  end
+```
+
+## Headless policies
+
+Given there is a policy without a corresponding model / ruby class, you can retrieve it by passing a symbol.
+
+```ruby
+# app/policies/dashboard_policy.rb
+class DashboardPolicy < Policy
+  def access?
+    user.orgs_that_can_manage.count > 0
+  end
+end
+```
+
+```ruby
+# In controllers
+authorize :dashboard, :access?
+
+# In views
+<% if Policy(:dashboard).access? %>
+  <%= link_to 'Dashboard', dashboard_path %>
+<% end %>
+```
+
+
+
+
 
 ### Dependency
 

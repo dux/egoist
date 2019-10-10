@@ -41,6 +41,11 @@ describe Policy do
       Policy(user: user).admin? { test = true }
       expect(test).to be_truthy
     end
+
+    it 'accepts symbol as a model' do
+      test = Policy(:headless, user: user).read?
+      expect(test).to be_truthy
+    end
   end
 
   context 'with model' do

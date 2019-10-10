@@ -1,5 +1,3 @@
-require_relative './clean-policy/base'
-require_relative './clean-policy/error'
-require_relative './clean-policy/proxy'
-require_relative './clean-policy/global'
-
+for lib in %w(base error proxy global framework_adapter)
+  require_relative './clean-policy/%s' % lib
+end
