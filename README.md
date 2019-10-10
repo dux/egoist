@@ -35,17 +35,33 @@ Basic usage is to load policy object and execute test
 
 That is all you need to know for calling policies.
 
+## Main difference to ruby most popular lib - Pundit
+
+* exposes friendly can method for models `@model.can.update?`
+* you can test with question mark `@model.can.update?` (`true`, `false`) or bang! `@model.can.update!`, which will raise `Policy::Error` error on `false`
+* you can pass block to policy check which will be evaluated on `false` policy check `@model.can.read? { redirect_to '/' }`
+* exposes global `Policy` method, for easier access from where ever you need it `Policy(@model).read?`
+* allows before filter to be defined. If it returns true, policy is not checked `def before; user.is_admin; end`
+* allows current user to be defined, `@model.can(current_user).update?` becomes cleaner `@model.can.update?`
+* named error messages
+
+### Other info
+
+* `auhthorize(@model, :read?)` and `is_authorized?` methods in Rails/Lux controllers are available.
+* you can pass only model, user, optional class and ability to test. It allways follows following pattern: Can "this" user perform "this" action on "this" model? - clean!
+
 ## How to create and name a policy class
 
 Rules
 
-* Policy methods end with question mark, raise errors and return `true` or `false`
-  * if you need to raise policy named error, use `error` method
 * Policy class have to inherit from `Policy`
 * Policy class is calculated based on a given model
   * if no model given, `ApplicationPolicy` will be used
   * with @post (class Post) model given, `PostPolicy` class will be used
   * with @foo_bar (class Foo::Bar) model given, `Foo::BarPolicy` class will be used
+  * with :foo (Symbol) model given , `FooPolicy` class will be used
+* Policy methods end with question mark, raise errors and return `true` or `false` (`def read?`)
+  * if you need to raise policy named error, use `error` method (`error 'max 10 records per hour allowed'`)
 
 #### Full example
 
