@@ -16,6 +16,7 @@ require_relative './mocks/posts'
 
 require_relative './policies/application_policy'
 require_relative './policies/post_policy'
+require_relative './policies/headless_policy'
 
 class Object
   def rr data

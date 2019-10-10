@@ -1,3 +1,5 @@
+# accepts: user:, model:, class:
+# accepts: @model, class:, user:
 def Policy *args
   opts = args.first.dup
 
@@ -10,7 +12,8 @@ def Policy *args
 
   klass =
   if model
-    opts[:class] || ('%s_policy' % model.class).classify.constantize
+    klass = model.is_a?(Symbol) ? model : model.class
+    opts[:class] || ('%s_policy' % klass).classify.constantize
   else
     ApplicationPolicy
   end
