@@ -236,6 +236,23 @@ class PostsController
 * `return redirect_to '/' unless @contract.can.read?`
 * or written like this even `@contract.can.read! { return redirect_to '/' }`
 
+### Using `.can ` shortcut
+
+Unless `current_user` is defined, it will be read from global state if possible.
+
+```ruby
+  # try User.current || Current.user
+  @post.can.update?
+
+  # or pass the user model
+  @post.can(@user).update?
+
+  # translates to
+  # use ModelPolicy if PostPolicy is not defined
+  klass = Object.const_defined?(PostPolicy) ? PostPolicy : ModelPolicy
+  # get Policy klass
+  Policy(model: @post, user: @user, class: klass
+```
 
 ### Using controller authorize method
 
@@ -252,6 +269,7 @@ class PostsController
     error.unauthorized unless is_authorized?
   end
 ```
+
 
 ## Headless policies
 
