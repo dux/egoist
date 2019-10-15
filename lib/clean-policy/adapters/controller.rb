@@ -1,6 +1,6 @@
 klass =
 if defined? Rails
-  ActionController::Base
+  ActiveController::Base
 elsif defined? Lux
   Lux::Controller
 end
