@@ -1,9 +1,7 @@
 class Policy
   module ModelAdapter
-    extend self
-
-    def can user=nil, model=nil
-      klass = "#{self.class}Policy"
+    def self.can user, model
+      klass = '%sPolicy' % model.class
       klass = Object.const_defined?(klass) ? klass.constantize : ModelPolicy
       Policy(model: model || self, user: user, class: klass)
     end
