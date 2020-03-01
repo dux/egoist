@@ -40,7 +40,12 @@ if klass
     end
 
     def is_authorized?
-      !!@_is_policy_authorized
+      @_is_policy_authorized == true
+    end
+
+    def is_authorized!
+      raise ::Policy::Error.new('Request is not authorized!') unless is_authorized?
+      true
     end
   end
 end

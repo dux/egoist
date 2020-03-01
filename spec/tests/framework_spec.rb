@@ -33,5 +33,15 @@ describe Policy do
       controller.authorize(true)
       expect(controller.is_authorized?).to be true
     end
+
+    it 'passes on is_authorized! bang check' do
+      User.current = admin_user
+      controller.authorize :admin?
+      expect(controller.is_authorized!).to be true
+    end
+
+    it 'fails on is_authorized! bang check' do
+      expect { controller.is_authorized! }.to raise_error Policy::Error
+    end
   end
 end

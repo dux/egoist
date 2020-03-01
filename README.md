@@ -1,5 +1,7 @@
 # Ruby access policy library
 
+ORM and framework agnostic, Ruby Access Policy library.
+
 ## Installation
 
 to install
@@ -43,7 +45,7 @@ That is all you need to know for calling policies.
 * you can pass block to policy check which will be evaluated on `false` policy check `@model.can.read? { redirect_to '/' }`
 * exposes global `Policy` method, for easier access from where ever you need it `Policy(@model).read?` (uses User.current or Current.user, can be customized)
 * allows before filter to be defined. If it returns true, policy is not checked
- 
+
   ```ruby
     def before
       # if true, will not check the policy
@@ -55,7 +57,7 @@ That is all you need to know for calling policies.
 
 ### Controllrers and authorizations
 
-Authorization check after the request is done, is basicly a rutime policy check. Use it in dashboards. 
+Authorization check after the request is done, is basicly a rutime policy check. Use it in dashboards.
 
 * you can pass only model, user, optional class and ability to test. It allways follows the same pattern: Can "this" user perform "this" action on "this" model? - clean!
 
@@ -78,7 +80,7 @@ class PostsController
     @post = Post.find_by id: params[:id]
 
     authorize @post, :write?             # can current user write @post model
-    authorize @post, :write?, PostPolicy # can current user write @post model       
+    authorize @post, :write?, PostPolicy # can current user write @post model
     authorize :dashboard, :access?       # can current user access dashboard, checked in DashboardPolicy
   end
 ```
