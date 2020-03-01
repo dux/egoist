@@ -1,10 +1,3 @@
-module Lux
-  class Controller
-  end
-end
-
-load './lib/clean-policy/framework_adapter.rb'
-
 describe Policy do
   let(:controller)  { Lux::Controller.new }
   let!(:post)       { mock.create :post }

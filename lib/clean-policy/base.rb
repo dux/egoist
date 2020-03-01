@@ -62,6 +62,8 @@ class Policy
       User.current
     elsif defined?(Current) && Current.respond_to?(:user)
       Current.user
+    else
+      raise RuntimeError.new('Current user not found in Policy#current_user')
     end
   end
 end

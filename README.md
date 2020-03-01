@@ -22,7 +22,7 @@ Basic usage is to load policy object and execute test
 
 * `@policy.read?`
 
-  this will return `true` value (`@model` or `true`) or `nil`.
+  this will return `truthy` value (`@model` or `true`) or `nil`.
 
 *  `@policy.read!`
 
@@ -38,17 +38,61 @@ That is all you need to know for calling policies.
 ## Main difference to ruby most popular lib - Pundit
 
 * exposes friendly can method for models `@model.can.update?`
-* you can test with question mark `@model.can.update?` (`true`, `false`) or bang! `@model.can.update!`, which will raise `Policy::Error` error on `false`
+* you can use question mark `@model.can.update?` (`true`, `false`)
+* you can use bang! `@model.can.update!`, which will raise `Policy::Error` error on `false`
 * you can pass block to policy check which will be evaluated on `false` policy check `@model.can.read? { redirect_to '/' }`
-* exposes global `Policy` method, for easier access from where ever you need it `Policy(@model).read?`
-* allows before filter to be defined. If it returns true, policy is not checked `def before; user.is_admin; end`
-* allows current user to be defined, `@model.can(current_user).update?` becomes cleaner `@model.can.update?`
+* exposes global `Policy` method, for easier access from where ever you need it `Policy(@model).read?` (uses User.current or Current.user, can be customized)
+* allows before filter to be defined. If it returns true, policy is not checked
+ 
+  ```ruby
+    def before
+      # if true, will not check the policy
+      user.is_admin?
+    end
+    ```
+* allows current user to be defined. Instead of `@model.can(current_user).update?` becomes "cleaner" `@model.can.update?`
 * named error messages
 
-### Other info
+### Controllrers and authorizations
 
-* `auhthorize(@model, :read?)` and `is_authorized?` methods in Rails/Lux controllers are available.
-* you can pass only model, user, optional class and ability to test. It allways follows following pattern: Can "this" user perform "this" action on "this" model? - clean!
+Authorization check after the request is done, is basicly a rutime policy check. Use it in dashboards. 
+
+* you can pass only model, user, optional class and ability to test. It allways follows the same pattern: Can "this" user perform "this" action on "this" model? - clean!
+
+* `auhthorize(@model, :read?)` or `auhthorize(@model, :read?)` will authorize model action and raise `Policy::Error` unlless one available.
+* `is_authorized?` will return `true` or `false`.
+* `is_authorized!` will raise `Policy::Error` unless authorized.
+
+```ruby
+class PostsController
+  rescue_from Policy::Error do
+    # ...
+  end
+
+  after_action do
+    raise FooError unless is_authorized?
+    is_authorized!
+  end
+
+  def show
+    @post = Post.find_by id: params[:id]
+
+    authorize @post, :write?             # can current user write @post model
+    authorize @post, :write?, PostPolicy # can current user write @post model       
+    authorize :dashboard, :access?       # can current user access dashboard, checked in DashboardPolicy
+  end
+```
+
+Of course you can allways use "bare bones" checks.
+
+```ruby
+  @post.can.read? { redirect_to '/', info: 'No access for you!' }
+
+  # or as one liner, because success returns @model
+  @post = Post.find_by(id: params[:id]).can.read? do
+    redirect_to '/'
+  end
+```
 
 ## How to create and name a policy class
 
@@ -57,9 +101,9 @@ Rules
 * Policy class have to inherit from `Policy`
 * Policy class is calculated based on a given model
   * if no model given, `ApplicationPolicy` will be used
-  * with @post (class Post) model given, `PostPolicy` class will be used
-  * with @foo_bar (class Foo::Bar) model given, `Foo::BarPolicy` class will be used
-  * with :foo (Symbol) model given , `FooPolicy` class will be used
+  * with `@post` (`class Post`) model given, `PostPolicy` class will be used
+  * with `@foo_bar` (`class Foo::Bar`) model given, `Foo::BarPolicy` class will be used
+  * with `:foo` (`Symbol`) model given , `FooPolicy` class will be used
 * Policy methods end with question mark, raise errors and return `true` or `false` (`def read?`)
   * if you need to raise policy named error, use `error` method (`error 'max 10 records per hour allowed'`)
 
@@ -91,7 +135,7 @@ class BlogPolicy < Policy
   end
 
   def delete?
-    model.is_published
+    model.is_published?
   end
 end
 ```
@@ -171,6 +215,8 @@ class Policy
       User.current
     elsif defined?(Current) && Current.respond_to?(:user)
       Current.user
+    else
+      raise RuntimeError.new('Current user not found in Policy#current_user')
     end
   end
 end
@@ -202,40 +248,6 @@ Use something like this
   Blog.editable_by(current_user).where(...)
 ```
 
-## Usage in controllers
-
-There is no controller method name to policy method name matching, because
-
-* that is not needed
-* is confusing and produces unnecessary code
-
-Unnecessary doube code == code code smell, and code that smells is not clean.
-
-What you should do is try to use basic CRUD actions (create, read, update, delete) as much as possible.
-
-For example let say that you have a `@contract` that is not for everybodys eyes and you have api action
-to fetch some data + view controller actions to show that data.
-
-You will not create `show?`, `show_documents?`, `quote?` methods in `QuotePolicy` and `ApiPolicy`, but you will ony create one, `read?` method in `ContractPolicy` and that is all.
-
-Then you write something like
-
-```ruby
-class PostsController
-  def show
-    @post = Post.find_by id: params[:id]
-    @post.can.read? { redirect_to '/' }
-
-    # or as one liner, because success returns @model
-    @post = Post.find_by(id: params[:id]).can.read? do
-      redirect_to '/'
-    end
-```
-
-* `@contract.can.read!` - `Policy::Error` will be raised unless a user can read a docuent
-* `return redirect_to '/' unless @contract.can.read?`
-* or written like this even `@contract.can.read! { return redirect_to '/' }`
-
 ### Using `.can ` shortcut
 
 Unless `current_user` is defined, it will be read from global state if possible.
@@ -248,28 +260,8 @@ Unless `current_user` is defined, it will be read from global state if possible.
   @post.can(@user).update?
 
   # translates to
-  # use ModelPolicy if PostPolicy is not defined
-  klass = Object.const_defined?(PostPolicy) ? PostPolicy : ModelPolicy
-  # get Policy klass
-  Policy(model: @post, user: @user, class: klass
+  Policy(model: @post, user: @user, class: PostPolicy).update?
 ```
-
-### Using controller authorize method
-
-```ruby
-class PostsController
-  def show
-    @post = Post.find_by id: params[:id]
-
-    authorize @post, :read?
-    authorize :dashboard, :access?
-  end
-
-  after_action do
-    error.unauthorized unless is_authorized?
-  end
-```
-
 
 ## Headless policies
 
@@ -279,7 +271,7 @@ Given there is a policy without a corresponding model / ruby class, you can retr
 # app/policies/dashboard_policy.rb
 class DashboardPolicy < Policy
   def access?
-    user.orgs_that_can_manage.count > 0
+    user.orgs_that_user_can_manage.count > 0
   end
 end
 ```
@@ -293,10 +285,6 @@ authorize :dashboard, :access?
   <%= link_to 'Dashboard', dashboard_path %>
 <% end %>
 ```
-
-
-
-
 
 ### Dependency
 

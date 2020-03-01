@@ -9,7 +9,12 @@ class String
   def singularize;  Dry::Inflector.new.singularize self; end
 end
 
-require './lib/clean-policy'
+module Lux
+  class Controller
+  end
+end
+
+require_relative '../lib/clean-policy'
 
 require_relative './mocks/users'
 require_relative './mocks/posts'
