@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    clean-policy (0.3.1)
+    clean-policy (0.3.2)
 
 GEM
   remote: http://rubygems.org/
@@ -41,4 +41,4 @@ DEPENDENCIES
   rspec
 
 BUNDLED WITH
-   2.0.2
+   2.1.4

@@ -38,7 +38,7 @@ class Policy
     raise Error, 'Access disabled in policy'
   rescue Policy::Error => error
     message = error.message
-    message += " - #{self.class}.#{@action}"
+    message += " - #{self.class}##{@action}"
 
     if block
       block.call(message)

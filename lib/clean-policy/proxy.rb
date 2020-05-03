@@ -7,6 +7,7 @@ class Policy
     def method_missing name, *args, &block
       name   = name.to_s.sub(/(.)$/, '')
       action = $1
+
       @policy.can?(name, *args)
       @policy.model || true
     rescue Policy::Error => error
