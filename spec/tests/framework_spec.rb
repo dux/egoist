@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe Policy do
   let(:controller)  { Lux::Controller.new }
   let!(:post)       { mock.create :post }
@@ -20,12 +22,12 @@ describe Policy do
 
     it 'is_authorized? is true' do
       User.current = admin_user
-      controller.authorize :admin?
+      controller.authorize :application, :admin?
       expect(controller.is_authorized?).to be true
     end
 
     it 'is_authorized? is true for block' do
-      controller.authorize(:admin?) { nil }
+      controller.authorize(:application, :admin?) { nil }
       expect(controller.is_authorized?).to be true
     end
 
@@ -36,7 +38,7 @@ describe Policy do
 
     it 'passes on is_authorized! bang check' do
       User.current = admin_user
-      controller.authorize :admin?
+      controller.authorize :application, :admin?
       expect(controller.is_authorized!).to be true
     end
 

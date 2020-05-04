@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    clean-policy (0.3.2)
+    egoist (0.4.0)
 
 GEM
   remote: http://rubygems.org/
@@ -35,8 +35,8 @@ PLATFORMS
 DEPENDENCIES
   awesome_print
   clean-mock
-  clean-policy!
   dry-inflector
+  egoist!
   faker
   rspec
 

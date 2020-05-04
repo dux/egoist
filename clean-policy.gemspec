@@ -1,5 +1,5 @@
 version  = File.read File.expand_path '.version', File.dirname(__FILE__)
-gem_name = 'clean-policy'
+gem_name = 'egoist'
 
 Gem::Specification.new gem_name, version do |gem|
   gem.summary     = 'Ruby access policy library'

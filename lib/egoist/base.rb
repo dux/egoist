@@ -1,7 +1,19 @@
 class Policy
+  class << self
+    def can(model=nil, user=nil)
+      if model.is_a?(Hash)
+        user, model = model[:user], model[:model]
+      end
+
+      new(user: user, model: model).can
+    end
+  end
+
+  ###
+  
   attr_reader :model, :user, :action
 
-  def initialize model:, user:
+  def initialize model:, user: nil
     @model = model
     @user  = user || current_user
   end

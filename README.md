@@ -1,3 +1,5 @@
+<img src="https://i.imgur.com/ssR9vHa.png" align="right" />
+
 # Ruby access policy library
 
 ORM and framework agnostic, Ruby Access Policy library.
@@ -6,21 +8,39 @@ ORM and framework agnostic, Ruby Access Policy library.
 
 to install
 
-`gem install clean-policy`
+`gem install egoist`
 
 or in Gemfile
 
-`gem 'clean-policy'`
+`gem 'egoist'`
 
 and to use
 
-`require 'clean-policy'`
+`require 'egoist'`
 
 ## How to use
 
 Basic usage is to load policy object and execute test
 
-`@policy = Policy(user: current_user, model: @blog)`
+```ruby
+@policy = Policy(user: current_user, model: @blog)
+# or short
+@policy = Policy(@blog, current_user)
+
+# or direct
+@policy = BlogPolicy(user: current_user, model: @blog)
+# or short
+@policy = BlogPolicy(@blog, current_user)
+
+# or if you do not use model
+@policy = Policy(:application, @user)
+@policy = ApplicationPolicy.can(user: @user)
+
+# or if you have User.current or Current.user defined
+# you do not have to pass the user
+@policy = Policy(@blog)
+@policy = BlogPolicy(@blog)
+```
 
 * `@policy.read?`
 
@@ -37,14 +57,14 @@ Basic usage is to load policy object and execute test
 
 That is all you need to know for calling policies.
 
-## Main difference to ruby most popular lib - Pundit
+## Main difference to popular lib - Pundit
 
 * exposes friendly can method for models `@model.can.update?`
-* you can use question mark `@model.can.update?` (`true`, `false`)
-* you can use bang! `@model.can.update!`, which will raise `Policy::Error` error on `false`
+  * you can use question mark to return boolean `@model.can.update?` (`true`, `false`)
+  * you can use bang! `@model.can.update!`, which will raise `Policy::Error` error on `false`
 * you can pass block to policy check which will be evaluated on `false` policy check `@model.can.read? { redirect_to '/' }`
-* exposes global `Policy` method, for easier access from where ever you need it `Policy(@model).read?` (uses User.current or Current.user, can be customized)
-* allows before filter to be defined. If it returns true, policy is not checked
+* exposes global `Policy` method, for easier access from where ever you need it `Policy(model: @model, user: @user).read?` (uses User.current or Current.user, can be customized)
+* In `Policy` classes allows before filter to be defined. If it returns true, policy is not checked
 
   ```ruby
     def before
@@ -55,7 +75,7 @@ That is all you need to know for calling policies.
 * allows current user to be defined. Instead of `@model.can(current_user).update?` becomes "cleaner" `@model.can.update?`
 * named error messages
 
-### Controllrers and authorizations
+## Controllrers and authorizations
 
 Authorization check after the request is done, is basicly a rutime policy check. Use it in dashboards.
 
@@ -102,7 +122,6 @@ Rules
 
 * Policy class have to inherit from `Policy`
 * Policy class is calculated based on a given model
-  * if no model given, `ApplicationPolicy` will be used
   * with `@post` (`class Post`) model given, `PostPolicy` class will be used
   * with `@foo_bar` (`class Foo::Bar`) model given, `Foo::BarPolicy` class will be used
   * with `:foo` (`Symbol`) model given , `FooPolicy` class will be used
@@ -116,7 +135,7 @@ class BlogPolicy < Policy
   COUNT = 100
 
   def before(action_name)
-    return @user.is_admin ? true : false
+    return user.is_admin ? true : false
   end
 
   def create?(ip)
@@ -142,9 +161,9 @@ class BlogPolicy < Policy
 end
 ```
 
-## Model helper - cleaner code, full example
+## Model can helper - cleaner code, full example
 
-if you modify `ApplicationModel` and create method `can`, that also auto load current user you can have a nifty code.
+This is how can helper on models is implemented.
 
 ```ruby
 # ActiveRecord or Sequel class
@@ -166,17 +185,14 @@ class BlogPolicy
     false
   end
 end
-```
 
-then this will work everywhere
-
-```ruby
-  @blog = Blog.first
-  @blog.can.read? # true or false
-  @blog.can.read! # true or raise Policy::Error
-  @blog.can.read! do |error_message|
-    # true or execute block if false
-  end
+# then this will work everywhere
+@blog = Blog.first
+@blog.can.read? # true or false
+@blog.can.read! # true or raise Policy::Error
+@blog.can.read! do |error_message|
+  # true or execute block if false
+end
 ```
 
 ## Before filter
@@ -205,9 +221,22 @@ Policy(@post, user: user).read?       # not allowed, raises error
 
 ## Defining global current user
 
-Maybe you have global current user for a request, so you do not have to pass it arround all the time.
+Maybe you have defined current user for a current request. If you do, you do not have to pass it arround all the time.
+
+```ruby
+# insted
+@policy = BlogPolicy(@blog, current_user).can.read?
+# you can write 
+@policy = BlogPolicy(@blog).can.read?
+
+# or inline
+@blog.can(@user).read?
+@blog.can.read?
+```
+
 
 Clear policy will try to load current by calling `Policy#current_user`. Feel free to overload the method to meet your needs.
+
 
 ```ruby
 class Policy
@@ -288,7 +317,7 @@ authorize :dashboard, :access?
 <% end %>
 ```
 
-### Dependency
+## Dependency
 
 none
 
@@ -298,7 +327,7 @@ After checking out the repo, run `bundle install` to install dependencies. Then,
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/dux/clean-policy.
+Bug reports and pull requests are welcome on GitHub at https://github.com/dux/egoist.
 This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the
 [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 

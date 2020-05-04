@@ -14,7 +14,7 @@ module Lux
   end
 end
 
-require_relative '../lib/clean-policy'
+require_relative '../lib/egoist'
 
 require_relative './mocks/users'
 require_relative './mocks/posts'
