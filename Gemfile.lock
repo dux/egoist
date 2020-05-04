@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    egoist (0.4.0)
+    egoist (0.5.0)
 
 GEM
   remote: http://rubygems.org/

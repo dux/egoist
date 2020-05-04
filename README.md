@@ -1,8 +1,8 @@
 <img src="https://i.imgur.com/ssR9vHa.png" align="right" />
 
-# Ruby access policy library
+# Egoist - ruby access policy library
 
-ORM and framework agnostic, Ruby Access Policy library.
+Egoist is ORM and framework agnostic, Ruby Access Policy library.
 
 ## Installation
 
@@ -20,7 +20,14 @@ and to use
 
 ## How to use
 
-Basic usage is to load policy object and execute test
+Common usage is to use it directly on the model
+
+```ruby
+@commpany.can.read?  # true or false
+@commpany.can.read!  # raise Policy::Error if false, or return true
+```
+
+If you want to contruct the object, usage is to load policy object and then execute the test
 
 ```ruby
 @policy = Policy(user: current_user, model: @blog)
