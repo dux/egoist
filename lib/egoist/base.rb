@@ -10,7 +10,7 @@ class Policy
   end
 
   ###
-  
+
   attr_reader :model, :user, :action
 
   def initialize model:, user: nil
@@ -44,8 +44,8 @@ class Policy
   def call *args, &block
     raise Error, 'User is not defined, no access' unless @user
 
-    return true if before(@action)
-    return true if send(@action, *args)
+    return true if before(@action) == true
+    return true if send(@action, *args) && after(@action) == true
 
     raise Error, 'Access disabled in policy'
   rescue Policy::Error => error
@@ -64,6 +64,10 @@ class Policy
     false
   end
 
+  def after action
+    true
+  end
+
   def error message
     raise Policy::Error.new(message)
   end
@@ -74,6 +78,8 @@ class Policy
       User.current
     elsif defined?(Current) && Current.respond_to?(:user)
       Current.user
+    elsif user = Thread.current[:current_user]
+      user
     else
       raise RuntimeError.new('Current user not found in Policy#current_user')
     end

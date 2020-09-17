@@ -3,6 +3,11 @@ class ApplicationPolicy < Policy
     return true if action == :before_1?
   end
 
+  def after action
+    error 'Not allowed' if action == :before_3?
+    true
+  end
+
   def admin?
     @user.is_admin
   end
@@ -13,6 +18,14 @@ class ApplicationPolicy < Policy
 
   def before_2?
     false
+  end
+
+  def before_3?
+    true
+  end
+
+  def before_4?
+    true
   end
 
   def custom_error?

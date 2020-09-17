@@ -73,5 +73,10 @@ describe Policy do
     it 'is accessible via can and accepts attributes' do
       expect(PostPolicy.can(user, post).create?({ip: '1.2.3.4'})).to be_truthy
     end
+
+    it 'follows rules in after block' do
+      expect { ApplicationPolicy.can(user: user).before_3! }.to raise_error Policy::Error
+      expect(ApplicationPolicy.can(user: user).before_4!).to be_truthy
+    end
   end
 end

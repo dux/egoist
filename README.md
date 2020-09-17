@@ -72,11 +72,28 @@ That is all you need to know for calling policies.
 * you can pass block to policy check which will be evaluated on `false` policy check `@model.can.read? { redirect_to '/' }`
 * exposes global `Policy` method, for easier access from where ever you need it `Policy(model: @model, user: @user).read?` (uses User.current or Current.user, can be customized)
 * In `Policy` classes allows before filter to be defined. If it returns true, policy is not checked
-
   ```ruby
-    def before
+    def before action
       # if true, will not check the policy
-      user.is_admin?
+      unless action == :delete?
+        return true if user.is_admin?
+      end
+    end
+  ```
+
+* In `Policy` classes allows after filter to be defined. If it fails or returns false, policy check will fail. This is last line of defence in policy check.
+  ```ruby
+    def after action
+      # if false or error, policy check will fail in the end
+      if action == :delete?
+        model.delete?
+
+        if msg = model.errors.join(', ')
+          error msg
+        end
+      end
+
+      true
     end
     ```
 * allows current user to be defined. Instead of `@model.can(current_user).update?` becomes "cleaner" `@model.can.update?`
@@ -204,7 +221,10 @@ end
 
 ## Before filter
 
-It is possible to define before filter for any action. If before filter returns true, action method will not be called.
+It is possible to define before and after filter for any action.
+
+* If before filter returns true, action method will not be called.
+* If after filter returns false, succesufful policy check will be overriden.
 
 #### Before filter example
 
@@ -233,7 +253,7 @@ Maybe you have defined current user for a current request. If you do, you do not
 ```ruby
 # insted
 @policy = BlogPolicy(@blog, current_user).can.read?
-# you can write 
+# you can write
 @policy = BlogPolicy(@blog).can.read?
 
 # or inline
@@ -241,9 +261,7 @@ Maybe you have defined current user for a current request. If you do, you do not
 @blog.can.read?
 ```
 
-
 Clear policy will try to load current by calling `Policy#current_user`. Feel free to overload the method to meet your needs.
-
 
 ```ruby
 class Policy
