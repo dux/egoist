@@ -33,11 +33,9 @@ class Policy
       @policy.model || true
     rescue Policy::Error => error
       if block_given?
-        yield
-        return nil
-      end
-
-      if action == '!'
+        yield error
+        nil
+      elsif action == '!'
         raise error
       elsif action == '?'
         nil
