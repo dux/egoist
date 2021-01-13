@@ -1,4 +1,9 @@
 class Policy
+  class Error < StandardError
+  end
+end
+
+class Policy
   class << self
     def error msg
       raise ::Policy::Error.new(msg)
@@ -7,6 +12,8 @@ class Policy
 
   ###
 
-  class Error < StandardError
+  def error message
+    raise Policy::Error.new(message)
   end
 end
+

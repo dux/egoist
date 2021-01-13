@@ -35,12 +35,12 @@ class Policy
 
   # call has to be isolated because specific of error handling
   def call *args, &block
-    raise Error, 'User is not defined, no access' unless @user
+    error 'User is not defined, no access' unless @user
 
     return true if before(@action) == true
     return true if send(@action, *args) && after(@action) == true
 
-    raise Policy::Error.new('Access disabled in policy')
+    error 'Access disabled in policy'
   rescue Policy::Error => error
     message = error.message
     message += " - #{self.class}##{@action}"
@@ -49,7 +49,7 @@ class Policy
       block.call(message)
       false
     else
-      raise Policy::Error.new(message)
+      error message
     end
   end
 
@@ -59,10 +59,6 @@ class Policy
 
   def after action
     true
-  end
-
-  def error message
-    raise Policy::Error.new(message)
   end
 
   # get current user from globals if globals defined
