@@ -30,23 +30,23 @@ Common usage is to use it directly on the model
 If you want to contruct the object, usage is to load policy object and then execute the test
 
 ```ruby
-@policy = Policy(user: current_user, model: @blog)
+# direct
+@policy = BlogPolicy.can(user: current_user, model: @blog)
 # or short
-@policy = Policy(@blog, current_user)
-
-# or direct
-@policy = BlogPolicy(user: current_user, model: @blog)
-# or short
-@policy = BlogPolicy(@blog, current_user)
+@policy = BlogPolicy.can(@blog, current_user)
 
 # or if you do not use model
-@policy = Policy(:application, @user)
-@policy = ApplicationPolicy.can(user: @user)
+ApplicationPolicy.can(user: @user).access?
 
-# or if you have User.current or Current.user defined
+# call BlogPolicy (if available) or ModelPolicy if you use base Policy class
+@policy = Policy.can(model: @blog, user: current_user)
+# or short
+@policy = Policy.can(@blog, current_user)
+
+# or if you have User.current or Current.user or Current.user or Thread.current[:current_user] defined
 # you do not have to pass the user
-@policy = Policy(@blog)
-@policy = BlogPolicy(@blog)
+@policy = Policy.can(@blog)
+@policy = BlogPolicy.can(@blog)
 ```
 
 * `@policy.read?`
@@ -70,7 +70,7 @@ That is all you need to know for calling policies.
   * you can use question mark to return boolean `@model.can.update?` (`true`, `false`)
   * you can use bang! `@model.can.update!`, which will raise `Policy::Error` error on `false`
 * you can pass block to policy check which will be evaluated on `false` policy check `@model.can.read? { redirect_to '/' }`
-* exposes global `Policy` method, for easier access from where ever you need it `Policy(model: @model, user: @user).read?` (uses User.current or Current.user, can be customized)
+* exposes global `Policy` method, for easier access from where ever you need it `Policy.can(model: @model, user: @user).read?` (uses User.current or Current.user, can be customized)
 * In `Policy` classes allows before filter to be defined. If it returns true, policy is not checked
   ```ruby
     def before action
@@ -95,7 +95,7 @@ That is all you need to know for calling policies.
 
       true
     end
-    ```
+  ```
 * allows current user to be defined. Instead of `@model.can(current_user).update?` becomes "cleaner" `@model.can.update?`
 * named error messages
 
@@ -117,15 +117,16 @@ class PostsController
 
   after_action do
     raise FooError unless is_authorized?
+
+    # or raise Policy::Error
     is_authorized!
   end
 
   def show
     @post = Post.find_by id: params[:id]
 
-    authorize @post, :write?             # can current user write @post model
-    authorize @post, :write?, PostPolicy # can current user write @post model
-    authorize :dashboard, :access?       # can current user access dashboard, checked in DashboardPolicy
+    authorize @post.can.write?            # can current user write @post model
+    authorize DashboardPolicy.can.access? # can current user access dashboard, checked in DashboardPolicy
   end
 ```
 
@@ -197,7 +198,7 @@ end
 # small proxy method to create policy scope from model
 class ApplicationModel
   def can(user = nil)
-    Policy(user: user || User.current, model: self)
+    Policy.can(user: user, model: self)
   end
 end
 
@@ -242,8 +243,8 @@ class PostPolicy < ModelPolicy
   end
 end
 
-Policy(@post, user: admin_user).read? # before filter returns true, error is never called
-Policy(@post, user: user).read?       # not allowed, raises error
+Policy.can(@post, user: admin_user).read? # before filter returns true, error is never called
+Policy.can(@post, user: user).read?       # not allowed, raises error
 ```
 
 ## Defining global current user
@@ -252,9 +253,9 @@ Maybe you have defined current user for a current request. If you do, you do not
 
 ```ruby
 # insted
-@policy = BlogPolicy(@blog, current_user).can.read?
+@policy = BlogPolicy.can(@blog, current_user).can.read?
 # you can write
-@policy = BlogPolicy(@blog).can.read?
+@policy = BlogPolicy.can(@blog).can.read?
 
 # or inline
 @blog.can(@user).read?
@@ -271,6 +272,8 @@ class Policy
       User.current
     elsif defined?(Current) && Current.respond_to?(:user)
       Current.user
+    elsif user = Thread.current[:current_user]
+      user
     else
       raise RuntimeError.new('Current user not found in Policy#current_user')
     end
@@ -288,20 +291,20 @@ and NOT in Policy object, because Policy object is A WRONG place for that logic.
 Use something like this
 
 ```ruby
-  # inside model
-  class Blog
-    def self.editable_by user
-      if Policy(user: user).admin?
-        # no limit if it can admin, return all records
-        self
-      else
-        # else return only records created by user
-        where(created_by: user.id)
-      end
+# inside model
+class Blog
+  def self.editable_by user
+    if Policy.can(user: user).admin?
+      # no limit if it can admin, return all records
+      self
+    else
+      # else return only records created by user
+      where(created_by: user.id)
     end
   end
+end
 
-  Blog.editable_by(current_user).where(...)
+Blog.editable_by(current_user).where(...)
 ```
 
 ### Using `.can ` shortcut
@@ -309,14 +312,14 @@ Use something like this
 Unless `current_user` is defined, it will be read from global state if possible.
 
 ```ruby
-  # try User.current || Current.user
-  @post.can.update?
+# try User.current || Current.user
+@post.can.update?
 
-  # or pass the user model
-  @post.can(@user).update?
+# or pass the user model
+@post.can(@user).update?
 
-  # translates to
-  Policy(model: @post, user: @user, class: PostPolicy).update?
+# translates to
+Policy.can(model: @post, user: @user, class: PostPolicy).update?
 ```
 
 ## Headless policies
@@ -337,7 +340,7 @@ end
 authorize :dashboard, :access?
 
 # In views
-<% if Policy(:dashboard).access? %>
+<% if DashboardPolicy.can.access? %>
   <%= link_to 'Dashboard', dashboard_path %>
 <% end %>
 ```

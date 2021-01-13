@@ -45,6 +45,16 @@ describe Policy do
       test = HeadlessPolicy.can(user: user).read?
       expect(test).to be_truthy
     end
+
+    it 'checks using user in Thread current' do
+      expect(ApplicationPolicy.can.admin?).to be_nil
+
+      User.current = user
+      expect(ApplicationPolicy.can.admin?).to be_nil
+
+      User.current = admin_user
+      expect(ApplicationPolicy.can.admin?).to be_truthy
+    end
   end
 
   context 'with model' do

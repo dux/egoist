@@ -1,4 +1,25 @@
 class Policy
+  class << self
+    # convenient proxy access
+    def can model=nil, user=nil
+      if model.is_a?(Hash)
+        model, user = model[:model], model[:user]
+      end
+
+      klass = self
+
+      # if we are calling can on Policy class, figure out policy name or fall back to ModelPolicy
+      if self == Policy
+        klass = ('%s_policy' % model.class).classify
+        klass = Object.const_defined?(klass) ? klass.constantize : ::ModelPolicy
+      end
+
+      klass.new(user: user, model: model).can
+    end
+  end
+
+  ###
+
   class Proxy
     def initialize policy
       @policy = policy

@@ -1,21 +1,15 @@
-class Policy
-  module ModelAdapter
-    def self.can user, model
-      klass = '%sPolicy' % model.class
-      klass = Object.const_defined?(klass) ? klass.constantize : ::ModelPolicy
-      Policy(model: model || self, user: user, class: klass)
-    end
-  end
+klass =
+if defined? ActiveRecord
+  ActiveRecord::Base
+elsif defined? Sequel
+  Sequel::Model
 end
 
-if defined? Rails
-  ActiveModel::Base.include Policy::ModelAdapter
-elsif defined? Sequel
-  class Sequel::Model
-    module InstanceMethods
-      def can user=nil
-        Policy::ModelAdapter.can user, self
-      end
+if klass
+  klass.class_eval do
+    def can user=nil
+      puts 12345
+      Policy.can self, user
     end
   end
 end

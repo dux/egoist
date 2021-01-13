@@ -1,16 +1,4 @@
 class Policy
-  class << self
-    def can(model=nil, user=nil)
-      if model.is_a?(Hash)
-        user, model = model[:user], model[:model]
-      end
-
-      new(user: user, model: model).can
-    end
-  end
-
-  ###
-
   attr_reader :model, :user, :action
 
   def initialize model:, user: nil
@@ -28,8 +16,13 @@ class Policy
       .to_sym
 
     # pre check
-    raise RuntimeError, 'Method name not allowed' if %i(can).index(@action)
-    raise NoMethodError, %[Policy check "#{@action}" not found in #{self.class}] unless respond_to?(@action)
+    if %i(can).index(@action)
+      raise RuntimeError.new('Method name not allowed')
+    end
+
+    unless respond_to?(@action)
+      raise NoMethodError.new(%[Policy check "#{@action}" not found in #{self.class}])
+    end
 
     call *args, &block
   end
@@ -47,7 +40,7 @@ class Policy
     return true if before(@action) == true
     return true if send(@action, *args) && after(@action) == true
 
-    raise Error, 'Access disabled in policy'
+    raise Policy::Error.new('Access disabled in policy')
   rescue Policy::Error => error
     message = error.message
     message += " - #{self.class}##{@action}"
@@ -56,7 +49,7 @@ class Policy
       block.call(message)
       false
     else
-      raise Policy::Error, message
+      raise Policy::Error.new(message)
     end
   end
 

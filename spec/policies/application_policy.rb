@@ -1,3 +1,5 @@
+# policy without models
+
 class ApplicationPolicy < Policy
   def before action
     return true if action == :before_1?
