@@ -8,10 +8,17 @@ class Policy
 
       klass = self
 
-      # if we are calling can on Policy class, figure out policy name or fall back to ModelPolicy
+      # if we are calling can on Policy class, figure out policy class or fall back to fallback_policy
       if self == Policy
         klass = ('%s_policy' % model.class).classify
-        klass = Object.const_defined?(klass) ? klass.constantize : ::ModelPolicy
+
+        if Object.const_defined?(klass)
+          klass = klass.constantize
+        elsif fallback = Policy.get(:fallback_policy)
+          klass = fallback.to_s.classify.constantize
+        else
+          raise ArgumentError.new('Policy class "%s" not found and fallback_policy not defined' % klass)
+        end
       end
 
       klass.new(user: user, model: model).can

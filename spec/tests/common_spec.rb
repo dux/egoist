@@ -57,6 +57,23 @@ describe Policy do
     end
   end
 
+  context 'options' do
+    it 'can set options' do
+      Policy.set(:fallback_policy, nil)
+      expect(Policy.get(:fallback_policy)).to be_nil
+
+      Policy.set(:fallback_policy, :foo)
+      expect(Policy.get(:fallback_policy)).to be(:foo)
+
+      Policy.set(:fallback_policy) { :bar }
+      expect(Policy.get(:fallback_policy)).to eq(:bar)
+    end
+
+    it 'fails on bad option' do
+      expect { Policy.set(:foo, nil) }.to raise_error NameError
+    end
+  end
+
   context 'with model' do
     it 'cant write not owned object' do
       post = mock.create :post, created_by: user.id + 9

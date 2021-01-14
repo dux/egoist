@@ -345,6 +345,26 @@ authorize :dashboard, :access?
 <% end %>
 ```
 
+## Defaults
+
+This are policy defautls for fallback policy and current user finder. Feel free to modify or disable any option.
+
+```ruby
+# If loading policy via Policy.can @foo, if FooPolicy is not found it will fallback to ModelPolicy
+Policy.set :fallback_policy, 'ModelPolicy'
+
+# if you use define your current user in Thread.current, you can fetch it here
+Policy.set :current_user do
+  if defined?(User) && User.respond_to?(:current)
+    User.current
+  elsif defined?(Current) && Current.respond_to?(:user)
+    Current.user
+  else
+    raise RuntimeError.new('User not defined and current user not found')
+  end
+end
+```
+
 ## Dependency
 
 none
