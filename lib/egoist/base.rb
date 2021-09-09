@@ -44,7 +44,7 @@ class Policy
     message += " - #{self.class}##{@action}"
 
     if block
-      block.call(message)
+      block.call message
       false
     else
       error message
@@ -59,16 +59,8 @@ class Policy
     true
   end
 
-  # get current user from globals if globals defined
+  # get current user from options
   def current_user
-    if defined?(User) && User.respond_to?(:current)
-      User.current
-    elsif defined?(Current) && Current.respond_to?(:user)
-      Current.user
-    elsif user = Thread.current[:current_user]
-      user
-    else
-      raise RuntimeError.new('Current user not found in Policy#current_user')
-    end
+    Policy.get :current_user
   end
 end

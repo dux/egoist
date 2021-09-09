@@ -8,7 +8,7 @@ class Policy
 
       klass = self
 
-      # if we are calling can on Policy class, figure out policy name or fall back to ModelPolicy
+      # if we are calling can on Policy class, figure out policy class or fall back to fallback_policy
       if self == Policy
         klass = ('%s_policy' % model.class).classify
         klass = Object.const_defined?('::%s' % klass) ? klass.constantize : ::ModelPolicy
