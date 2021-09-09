@@ -11,7 +11,7 @@ class Policy
       # if we are calling can on Policy class, figure out policy name or fall back to ModelPolicy
       if self == Policy
         klass = ('%s_policy' % model.class).classify
-        klass = Object.const_defined?(klass) ? klass.constantize : ::ModelPolicy
+        klass = Object.const_defined?('::%s' % klass) ? klass.constantize : ::ModelPolicy
       end
 
       klass.new(user: user, model: model).can

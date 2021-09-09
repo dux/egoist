@@ -8,7 +8,6 @@ end
 if klass
   klass.class_eval do
     def can user=nil
-      puts 12345
       Policy.can self, user
     end
   end

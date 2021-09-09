@@ -33,10 +33,8 @@ class Policy
 
   private
 
-  # call has to be isolated because specific of error handling
+  # call has to be isolated because of specifics in handling
   def call *args, &block
-    error 'User is not defined, no access' unless @user
-
     return true if before(@action) == true
     return true if send(@action, *args) && after(@action) == true
 
