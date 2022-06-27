@@ -12,7 +12,7 @@ describe Policy do
   context 'without model' do
     it 'cant access admin pages' do
       # checks on ApplicationPolicy
-      expect { ApplicationPolicy.can(user).admin! }.to raise_error Policy::Error
+      expect { ApplicationPolicy.can(user: user).admin! }.to raise_error Policy::Error
     end
 
     it 'can access admin pages' do
@@ -37,7 +37,7 @@ describe Policy do
 
     it 'accepts error block in question method' do
       test = false
-      ApplicationPolicy.can(user).admin? { test = true }
+      ApplicationPolicy.can(user: user).admin? { test = true }
       expect(test).to be_truthy
     end
 
@@ -47,30 +47,15 @@ describe Policy do
     end
 
     it 'checks using user in Thread current' do
+      Thread.current[:current_user] = user
       expect(ApplicationPolicy.can.admin?).to be_nil
+      Thread.current[:current_user] = nil
 
       User.current = user
       expect(ApplicationPolicy.can.admin?).to be_nil
 
       User.current = admin_user
       expect(ApplicationPolicy.can.admin?).to be_truthy
-    end
-  end
-
-  context 'options' do
-    it 'can set options' do
-      Policy.set(:fallback_policy, nil)
-      expect(Policy.get(:fallback_policy)).to be_nil
-
-      Policy.set(:fallback_policy, :foo)
-      expect(Policy.get(:fallback_policy)).to be(:foo)
-
-      Policy.set(:fallback_policy) { :bar }
-      expect(Policy.get(:fallback_policy)).to eq(:bar)
-    end
-
-    it 'fails on bad option' do
-      expect { Policy.set(:foo, nil) }.to raise_error NameError
     end
   end
 
@@ -99,11 +84,6 @@ describe Policy do
 
     it 'is accessible via can and accepts attributes' do
       expect(PostPolicy.can(user, post).create?({ip: '1.2.3.4'})).to be_truthy
-    end
-
-    it 'follows rules in after block' do
-      expect { ApplicationPolicy.can(user: user).before_3! }.to raise_error Policy::Error
-      expect(ApplicationPolicy.can(user: user).before_4!).to be_truthy
     end
   end
 end

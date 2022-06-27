@@ -35,21 +35,5 @@ describe Policy do
       User.current = user
       expect { post.can.write! }.to raise_error Policy::Error
     end
-
-    it 'works with fallback_policy option' do
-      NotFound  = Struct.new :id
-      not_found = NotFound.new 123
-
-      Policy.set :fallback_policy, 'ModelPolicy'
-      expect { Policy.can model: not_found }.to raise_error NameError
-
-      Policy.set :fallback_policy, :model_policy
-      expect { Policy.can model: not_found }.to raise_error NameError
-
-      class ModelPolicy < Policy; end;
-      expect { Policy.can model: not_found }.not_to raise_error
-
-      Object.send(:remove_const, :ModelPolicy)
-    end
   end
 end

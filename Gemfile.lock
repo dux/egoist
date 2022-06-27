@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    egoist (0.6.0)
+    egoist (0.7.1)
 
 GEM
   remote: http://rubygems.org/
@@ -41,4 +41,4 @@ DEPENDENCIES
   rspec
 
 BUNDLED WITH
-   2.1.4
+   2.2.3

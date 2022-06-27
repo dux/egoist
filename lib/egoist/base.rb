@@ -3,7 +3,7 @@ class Policy
 
   def initialize model:, user: nil
     @model = model
-    @user  = user || current_user
+    @user  = user || Policy.current_user
   end
 
   # pass block if you want to handle errors yourself
@@ -36,7 +36,7 @@ class Policy
   # call has to be isolated because of specifics in handling
   def call *args, &block
     return true if before(@action) == true
-    return true if send(@action, *args) && after(@action) == true
+    return true if send(@action, *args)
 
     error 'Access disabled in policy'
   rescue Policy::Error => error
@@ -53,14 +53,5 @@ class Policy
 
   def before action
     false
-  end
-
-  def after action
-    true
-  end
-
-  # get current user from options
-  def current_user
-    Policy.get :current_user
   end
 end

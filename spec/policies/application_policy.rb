@@ -5,11 +5,6 @@ class ApplicationPolicy < Policy
     return true if action == :before_1?
   end
 
-  def after action
-    error 'Not allowed' if action == :before_3?
-    true
-  end
-
   def admin?
     @user.is_admin
   end
