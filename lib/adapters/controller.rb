@@ -1,13 +1,8 @@
-klass =
-if defined? Rails
-  ActionController::Base
-elsif defined? Lux
-  Lux::Controller
-end
+# include Policy::Controller
 
-if klass
-  klass.class_eval do
-    def authorize result=false
+class Policy
+  module Controller
+    def authorize result = false
       if (block_given? ? yield : result)
         @_is_policy_authorized = true
       else

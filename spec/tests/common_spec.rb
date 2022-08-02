@@ -48,14 +48,14 @@ describe Policy do
 
     it 'checks using user in Thread current' do
       Thread.current[:current_user] = user
-      expect(ApplicationPolicy.can.admin?).to be_nil
+      expect(ApplicationPolicy.can.admin?).to eq(false)
       Thread.current[:current_user] = nil
 
       User.current = user
-      expect(ApplicationPolicy.can.admin?).to be_nil
+      expect(ApplicationPolicy.can.admin?).to eq(false)
 
       User.current = admin_user
-      expect(ApplicationPolicy.can.admin?).to be_truthy
+      expect(ApplicationPolicy.can.admin?).to eq(true)
     end
   end
 

@@ -1,4 +1,4 @@
-require 'awesome_print'
+require 'amazing_print'
 require 'clean-mock'
 require 'faker'
 require 'dry/inflector'
@@ -7,11 +7,6 @@ class String
   def classify;     Dry::Inflector.new.classify self; end
   def constantize;  Dry::Inflector.new.constantize self; end
   def singularize;  Dry::Inflector.new.singularize self; end
-end
-
-module Lux
-  class Controller
-  end
 end
 
 require_relative '../lib/egoist'

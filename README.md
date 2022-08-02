@@ -151,6 +151,10 @@ end
 
 ###
 
+class ApplicationModel
+  include Policy::Model
+end
+
 @company = Company.find(123)
 
 # full init
@@ -218,6 +222,10 @@ Authorization check after the request is done, is basicly a rutime policy check.
 * `is_authorized!` will raise `Policy::Error` unless authorized.
 
 ```ruby
+class BaseController
+  include Policy::Controller
+end
+
 class Dashboard::PostsController < BaseController
   rescue_from Policy::Error do
     # ...

@@ -1,5 +1,22 @@
 require 'spec_helper'
 
+module Lux
+  class Controller
+    include Policy::Controller
+  end
+end
+
+class Mocvara
+  include Policy::Model
+end
+
+class MocvaraPolicy < Policy
+  def admin?
+    user.is_admin
+  end
+end
+
+
 describe Policy do
   let(:controller)  { Lux::Controller.new }
   let!(:post)       { mock.create :post }
@@ -31,6 +48,19 @@ describe Policy do
 
     it 'fails on false pass' do
       expect { controller.authorize(false) }.to raise_error Policy::Error
+    end
+  end
+
+  context 'model checks' do
+    let(:user) { User.new 1, 'Dux', 'dux@foo.bar', true }
+
+    it 'checks if it can work trough model' do
+      expect(Mocvara.new.can(user).admin?).to eq(true)
+    end
+
+    it 'checks if it can access current user' do
+      User.current = user
+      expect(Mocvara.new.can.admin?).to eq(true)
     end
   end
 end

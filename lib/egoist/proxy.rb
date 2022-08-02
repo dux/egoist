@@ -42,7 +42,12 @@ class Policy
       action = $1
 
       @policy.can?(name, *args)
-      @policy.model || true
+
+      if action == '!'
+        @policy.model || true
+      else
+        true
+      end
     rescue Policy::Error => error
       if block_given?
         yield error
@@ -50,7 +55,7 @@ class Policy
       elsif action == '!'
         raise error
       elsif action == '?'
-        nil
+        false
       else
         raise ArgumentError.new('Bad policy method %s' % name)
       end

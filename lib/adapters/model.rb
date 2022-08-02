@@ -1,14 +1,9 @@
-klass =
-if defined? ActiveRecord
-  ActiveRecord::Base
-elsif defined? Sequel
-  Sequel::Model
-end
+# include Policy::Model
 
-if klass
-  klass.class_eval do
-    def can user=nil
-      Policy.can self, user
+class Policy
+  module Model
+    def can user = nil
+      Policy.can model: self, user: user
     end
   end
 end
