@@ -18,7 +18,7 @@ and to use
 
 `require 'egoist'`
 
-## Idead
+## Idea
 
 Egoist tries to provide simple answer to question: can this user perform this action on this object.
 
@@ -43,7 +43,7 @@ end
 @commpany.can(@user).read!    # returns @commpany / raise Policy::Error
 
 # if you want to do a specific action if policy check fails, use block (works for ? and ! methods)
-@commpany.can(@user).read? do |error_message| # returns true or raise error
+@commpany.can(@user).read? do |error_message| # returns true or executes code + passes error
   redirect_to '/', error: 'You are not allowed to access this company'
 end
 ```
@@ -207,15 +207,16 @@ That is all you need to know for calling policies.
 * allows customized error messages `error('You are not allowed to make yourself admin')`
   `https://github.com/varvet/pundit/issues/654`
 
-* does not support Scope (Active::Record) anti-pattern. Define your scopes inside a models using policy checks
+* on purpose, does not support Scope (Active::Record) anti-pattern. Define your scopes inside a models using policy checks
 
-* allows passing of parameters to policy checks. This is anti-pattern, but sometimes is needed
+* allows passing of parameters to policy checks. This is anti-pattern, but sometimes is needed. 
+
 
 ## Controllrers and authorizations
 
-Authorization check after the request is done, is basicly a rutime policy check. Use it in dashboards.
+Authorization check after the request is done, is basicly a runtime policy check. Use it in dashboards.
 
-* you can pass only model, user, optional class and ability to test. It allways follows the same pattern: Can "this" user perform "this" action on "this" model? - clean!
+* you can pass only model, user, optional class and ability to test. It allways follows the same pattern: Can "this" user perform "this" action on "this" model? - clean! (if you need to pass multiple objects in policy check, send Hash as model)
 
 * `auhthorize(@model, :read?)` or `auhthorize(@model, :read?)` will authorize model action and raise `Policy::Error` unlless one available.
 * `is_authorized?` will return `true` or `false`.
@@ -233,7 +234,7 @@ class Dashboard::PostsController < BaseController
 
   after_action do
     unless is_authorized?
-      raise Policy::Error.new('Custom message') 
+      raise Policy::Error.new('You are not authorized, access forbidden') 
     end
 
     # or raise Policy::Error
@@ -251,7 +252,7 @@ class Dashboard::PostsController < BaseController
 Of course you can allways use "bare bones" checks.
 
 ```ruby
-  @post.can.read? { redirect_to '/', info: 'No access for you!' }
+  @post.can(user).read? { redirect_to '/', info: 'No access for you!' }
 
   # or as one liner, because success returns @model
   @post = Post.find_by(id: params[:id]).can.read? do
@@ -267,7 +268,6 @@ Rules
 * Policy class is calculated based on a given model
   * with `@post` (`class Post`) model given, `PostPolicy` class will be used
   * with `@foo_bar` (`class Foo::Bar`) model given, `Foo::BarPolicy` class will be used
-  * with `:foo` (`Symbol`) model given , `FooPolicy` class will be used
 * Policy methods end with question mark, raise errors and return `true` or `false` (`def read?`)
   * if you need to raise policy named error, use `error` method (`error 'max 10 records per hour allowed'`)
 
@@ -287,7 +287,7 @@ BlogPolicy.can(@blog, current_user).read?
 
 # you can write
 BlogPolicy.can(@blog).can.read?
-# or autload BlogPolicy via useage of base class
+# or autload BlogPolicy via class name
 Policy.can(@blog).can.read?
 
 # or even shorter
